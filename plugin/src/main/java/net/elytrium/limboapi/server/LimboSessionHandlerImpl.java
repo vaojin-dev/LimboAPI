@@ -271,14 +271,12 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(KeepAlivePacket packet) {
-    MinecraftConnection connection = this.player.getConnection();
     if (this.keepAlivePending) {
       if (packet.getRandomId() != this.keepAliveKey) {
-        connection.closeWith(this.plugin.getPackets().getInvalidPing());
         if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-          LimboAPI.getLogger().warn("{} sent an invalid keepalive.", this.player);
+          LimboAPI.getLogger().debug("{} sent an unmatched keepalive (old server response?). Ignored.", this.player);
         }
-        return false;
+        return true;
       } else {
         this.keepAlivePending = false;
         this.keepAlivesSkipped = 0;
@@ -287,14 +285,13 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
         return true;
       }
     } else {
-      connection.closeWith(this.plugin.getPackets().getInvalidPing());
-
       if (Settings.IMP.MAIN.LOGGING_ENABLED) {
-        LimboAPI.getLogger().warn("{} sent an unexpected keepalive.", this.player);
+        LimboAPI.getLogger().debug("{} sent an unexpected keepalive. Ignored.", this.player);
       }
-      return false;
+      return true;
     }
   }
+
 
   @Override
   public boolean handle(LegacyChatPacket packet) {

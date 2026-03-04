@@ -14,7 +14,7 @@ allprojects() {
   apply(plugin: "org.cadixdev.licenser")
 
   setGroup("net.elytrium.limboapi")
-  setVersion("1.1.27-SNAPSHOT")
+  setVersion("1.1.27.vaojin")
 
   compileJava() {
     sourceCompatibility = JavaVersion.VERSION_17
@@ -24,13 +24,20 @@ allprojects() {
   repositories() {
     mavenCentral()
 
-    maven() {
-      setName("elytrium-repo")
-      setUrl("https://maven.elytrium.net/repo/")
-    }
-    maven() {
+    maven {
       setName("papermc-repo")
       setUrl("https://repo.papermc.io/repository/maven-public/")
+    }
+
+    maven {
+      setName("elytrium-mirror")
+      setUrl("https://cdn.vaojin.com/elytrium/repo/")
+
+      content {
+        includeGroup("net.elytrium")
+        includeGroup("net.elytrium.commons")
+        includeModule("com.velocitypowered", "velocity-proxy")
+      }
     }
   }
 
