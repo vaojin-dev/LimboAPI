@@ -94,6 +94,7 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
   private long keepAliveSentTime;
   private int ping = -1;
   private int genericBytes;
+  private long lastGenericBytesReset = System.currentTimeMillis();
   private boolean loaded;
   private boolean switching;
   private boolean disconnecting;
@@ -331,6 +332,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
 
   @Override
   public void handleUnknown(ByteBuf packet) {
+    this.checkAndResetGenericRateLimit();
+
     int readableBytes = packet.readableBytes();
     this.genericBytes += readableBytes;
     if (readableBytes > Settings.IMP.MAIN.MAX_UNKNOWN_PACKET_LENGTH) {
@@ -350,6 +353,8 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       }
       this.chatSession.complete(this);
     } else if (packet instanceof PluginMessagePacket pluginMessage) {
+      this.checkAndResetGenericRateLimit();
+
       int singleLength = pluginMessage.content().readableBytes() + pluginMessage.getChannel().length() * 4;
       this.genericBytes += singleLength;
       if (singleLength > Settings.IMP.MAIN.MAX_SINGLE_GENERIC_PACKET_LENGTH) {
@@ -453,6 +458,14 @@ public class LimboSessionHandlerImpl implements MinecraftSessionHandler {
       } else {
         this.playTransition.thenRun(runnable);
       }
+    }
+  }
+
+  private void checkAndResetGenericRateLimit() {
+    long currentTime = System.currentTimeMillis();
+    if (currentTime - this.lastGenericBytesReset >= 1000L) {
+      this.genericBytes = 0;
+      this.lastGenericBytesReset = currentTime;
     }
   }
 
