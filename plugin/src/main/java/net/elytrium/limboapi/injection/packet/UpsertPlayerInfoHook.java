@@ -62,18 +62,21 @@ public class UpsertPlayerInfoHook extends UpsertPlayerInfoPacket {
 
           if (player.getUniqueId().equals(item.getProfileId())) {
             Entry fixedEntry = new Entry(initialID);
+            
             fixedEntry.setDisplayName(item.getDisplayName());
             fixedEntry.setGameMode(item.getGameMode());
             fixedEntry.setLatency(item.getLatency());
-            fixedEntry.setDisplayName(item.getDisplayName());
+            
             if (item.getProfile() != null && item.getProfile().getId().equals(player.getUniqueId())) {
               fixedEntry.setProfile(new GameProfile(initialID, item.getProfile().getName(), item.getProfile().getProperties()));
             } else {
               fixedEntry.setProfile(item.getProfile());
             }
+            
             fixedEntry.setListed(item.isListed());
             fixedEntry.setListOrder(item.getListOrder());
             fixedEntry.setChatSession(item.getChatSession());
+            fixedEntry.setShowHat(item.isShowHat()); 
 
             items.set(i, fixedEntry);
           }
