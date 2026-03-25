@@ -20,9 +20,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
-
-      - name: Build
+          java-version: 25
+      - name: Build LimboAPI
         run: ./gradlew build
 
       - name: Upload Artifact (all JARs)
