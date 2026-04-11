@@ -70,6 +70,7 @@ jobs:
         with:
           tag: dev-build
           name: Dev-build ${{ steps.git-version.outputs.id }}
+          draft: false
           prerelease: true
           artifacts: ${{ steps.find-jar.outputs.jarpath }}
           body: ${{ join(github.event.commits.*.message, '\n') }}
