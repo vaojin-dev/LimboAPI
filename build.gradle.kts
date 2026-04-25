@@ -14,7 +14,7 @@ allprojects {
     apply(plugin = "net.minecraftforge.licenser")
 
     group = "net.elytrium.limboapi"
-    version = "1.1.27.vaojin"
+    version = "1.1.27.vaojin-SNAPSHOT"
 
     tasks.withType<JavaCompile> {
         sourceCompatibility = JavaVersion.VERSION_21.toString()
@@ -38,6 +38,34 @@ allprojects {
             required.set(true)
             outputLocation.set(layout.buildDirectory.file("reports/spotbugs/main/spotbugs.html"))
             setStylesheet("fancy-hist.xsl")
+        }
+    }
+}
+
+project(":plugin") {
+    apply(plugin = "maven-publish")
+
+    afterEvaluate {
+        extensions.configure<PublishingExtension> {
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/vaojin-dev/LimboAPI")
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR")
+                        password = System.getenv("GITHUB_TOKEN")
+                    }
+                }
+            }
+            publications {
+                create<MavenPublication>("maven") {
+                    artifactId = "limboapi"
+                    version = project.version.toString()
+                    groupId = "net.elytrium"
+                    
+                    artifact(tasks.named("shadowJar"))
+                }
+            }
         }
     }
 }
