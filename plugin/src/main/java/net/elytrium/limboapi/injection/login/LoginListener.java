@@ -119,10 +119,11 @@ public class LoginListener {
 
   @SuppressWarnings("ConstantConditions")
   public void hookLoginSession(GameProfileRequestEvent event) throws Throwable {
-    LoginInboundConnection inboundConnection = (LoginInboundConnection) event.getConnection();
-    // In some cases, e.g. if the player logged out or was kicked right before the GameProfileRequestEvent hook,
-    // the connection will be broken (possibly by GC) and we can't get it from the delegate field.
-    if (LoginInboundConnection.class.isAssignableFrom(inboundConnection.getClass())) {
+    // The connection is not always a LoginInboundConnection: LimboAPI re-fires a GameProfileRequestEvent in
+    // LoginTasksQueue#finish using the InitialInboundConnection delegate, and in some cases (e.g. if the player
+    // logged out or was kicked right before this hook) the connection may be broken. We must check the type
+    // before casting, otherwise we'd throw a ClassCastException instead of gracefully skipping it.
+    if (event.getConnection() instanceof LoginInboundConnection inboundConnection) {
       // Changing mcConnection to the closed one. For what? To break the "initializePlayer"
       // method (which checks mcConnection.isActive()) and to override it. :)
       InitialInboundConnection inbound = (InitialInboundConnection) DELEGATE_FIELD.invokeExact(inboundConnection);
@@ -194,7 +195,8 @@ public class LoginListener {
               // Complete the Login process.
               int threshold = this.server.getConfiguration().getCompressionThreshold();
               ChannelPipeline pipeline = connection.getChannel().pipeline();
-              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0;
+              boolean compressionEnabled = threshold >= 0 && connection.getProtocolVersion().compareTo(ProtocolVersion.MINECRAFT_1_8) >= 0
+                  && pipeline.context(Connections.FRAME_ENCODER) != null;
               if (compressionEnabled) {
                 connection.write(new SetCompressionPacket(threshold));
                 this.plugin.fixDecompressor(pipeline, threshold, true);
@@ -230,6 +232,7 @@ public class LoginListener {
               success.setUsername(player.getUsername());
               success.setProperties(player.getGameProfileProperties());
               success.setUuid(playerUniqueID);
+              success.setSessionId(this.server.getSessionId());
 
               if (Settings.IMP.MAIN.COMPATIBILITY_MODE) {
                 connection.write(success);
@@ -238,6 +241,7 @@ public class LoginListener {
                 successHook.setUsername(player.getUsername());
                 successHook.setProperties(player.getGameProfileProperties());
                 successHook.setUuid(playerUniqueID);
+                successHook.setSessionId(this.server.getSessionId());
                 connection.write(successHook);
 
                 ChannelHandler compressionHandler = pipeline.get(Connections.COMPRESSION_ENCODER);
