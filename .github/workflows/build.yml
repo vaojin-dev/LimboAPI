@@ -43,7 +43,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Find main JAR
+      - name: Find and rename main JAR
         id: find-jar
         run: |
           jarpath="$(find plugin/build/libs -maxdepth 1 -type f -name "*.jar" \
@@ -52,6 +52,15 @@ jobs:
             echo "No jar found in plugin/build/libs" >&2
             exit 1
           fi
+          
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+            NEW_NAME="plugin/build/libs/limboapi-${TAG_VERSION}.jar"
+            
+            mv "$jarpath" "$NEW_NAME"
+            jarpath="$NEW_NAME"
+          fi
+          
           echo "jarpath=$jarpath" >> $GITHUB_OUTPUT
 
       # dev-build (Runs only on main branch pushes)
